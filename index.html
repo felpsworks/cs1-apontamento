@@ -91,6 +91,27 @@
 
   .turno-bars{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
   .turno-bar-card{background:var(--white);border-radius:8px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.08);text-align:center;}
+
+  /* GRÁFICOS DASHBOARD */
+  .chart-container{padding:8px 4px 4px;}
+  .vbar-chart{display:flex;align-items:flex-end;justify-content:space-around;gap:16px;height:220px;padding:10px 10px 0;}
+  .vbar-col{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;height:100%;justify-content:flex-end;}
+  .vbar-value{font-size:18px;font-weight:800;color:var(--black);}
+  .vbar-rect{width:56px;background:linear-gradient(180deg,var(--red) 0%,var(--steel) 100%);border-radius:6px 6px 0 0;transition:height 0.6s ease;min-height:4px;}
+  .vbar-label{font-size:12px;font-weight:700;color:var(--gray-700);margin-top:2px;}
+
+  .hbar-chart{display:flex;flex-direction:column;gap:14px;padding:6px 4px;}
+  .hbar-row{display:grid;grid-template-columns:90px 1fr 50px;align-items:center;gap:10px;}
+  .hbar-label{font-size:13px;font-weight:700;color:var(--gray-700);text-align:right;}
+  .hbar-track{background:var(--gray-100);border-radius:5px;height:22px;overflow:hidden;}
+  .hbar-fill{height:100%;background:linear-gradient(90deg,var(--red) 0%,var(--steel) 100%);border-radius:5px;transition:width 0.6s ease;min-width:4px;}
+  .hbar-value{font-size:13px;font-weight:700;color:var(--black);}
+
+  .funnel-chart{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;}
+  .funnel-row{position:relative;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;border-radius:4px;padding:10px 16px;transition:width 0.4s ease;min-width:120px;}
+  .funnel-crown{position:absolute;left:-26px;font-size:18px;}
+  .funnel-name{margin-right:8px;}
+  .funnel-val{opacity:0.9;font-weight:600;}
   .turno-bar-label{font-size:13px;font-weight:700;color:var(--gray-500);margin-bottom:6px;}
   .turno-bar-total{font-size:26px;font-weight:800;}
   .turno-bar-nc{font-size:13px;color:var(--red);font-weight:600;}
@@ -304,9 +325,9 @@
         <div class="kpi"><div class="kpi-label">Registros</div><div class="kpi-value" id="d-reg">0</div></div>
       </div>
 
-      <div class="card"><div class="card-title">Produtividade por Turno</div><div class="turno-bars" id="d-turno-bars"></div></div>
-      <div class="card"><div class="card-title">Por Cliente</div><div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Inspecionado</th><th>NC</th><th>Taxa NC</th></tr></thead><tbody id="d-cli-tbody"></tbody></table></div></div>
-      <div class="card"><div class="card-title">Ranking de Inspetores</div><div class="table-wrap"><table><thead><tr><th>#</th><th>Inspetor</th><th>Turno</th><th>Inspecionado</th><th>NC</th><th>Taxa NC</th></tr></thead><tbody id="d-insp-tbody"></tbody></table></div></div>
+      <div class="card"><div class="card-title">Produtividade por Turno</div><div class="chart-container" id="turno-bar-chart"></div></div>
+      <div class="card"><div class="card-title">Por Cliente</div><div class="chart-container" id="cliente-bar-chart"></div></div>
+      <div class="card"><div class="card-title">Ranking de Inspetores</div><div class="chart-container" id="insp-funnel-chart"></div></div>
       <div class="card"><div class="card-title">Defeitos mais frequentes</div><div class="table-wrap"><table><thead><tr><th>Defeito</th><th>Ocorrências</th><th>Qtd. Peças NC</th></tr></thead><tbody id="d-def-tbody"></tbody></table></div></div>
     </div>
 
@@ -1049,23 +1070,36 @@ function renderDashboard(){
   document.getElementById('d-pct').textContent=total?((nc/total)*100).toFixed(1)+'%':'0%';
   document.getElementById('d-reg').textContent=data.length;
 
+  // Produtividade por Turno — Barras Verticais
   const turnos={T1:{total:0,nc:0},T2:{total:0,nc:0},T3:{total:0,nc:0}};
   data.forEach(a=>{if(turnos[a.turno]){turnos[a.turno].total+=a.qtdTotal;turnos[a.turno].nc+=a.qtdNC;}});
   const maxT=Math.max(...Object.values(turnos).map(t=>t.total))||1;
-  document.getElementById('d-turno-bars').innerHTML=Object.entries(turnos).map(([t,v])=>{
-    const p=v.total?((v.nc/v.total)*100).toFixed(1):'0.0';
-    const w=((v.total/maxT)*100).toFixed(0);
-    return `<div class="turno-bar-card"><div class="turno-bar-label">${t}</div><div class="turno-bar-total">${v.total}</div><div class="bar-visual"><div class="bar-fill" style="width:${w}%"></div></div><div class="turno-bar-nc">${v.nc} NC</div><div style="font-size:11px;color:var(--gray-500)">${p}% rejeição</div></div>`;
-  }).join('');
+  document.getElementById('turno-bar-chart').innerHTML=`<div class="vbar-chart">`+
+    Object.entries(turnos).map(([t,v])=>{
+      const h=Math.round((v.total/maxT)*180);
+      return `<div class="vbar-col">
+        <div class="vbar-value">${v.total}</div>
+        <div class="vbar-rect" style="height:${h}px"></div>
+        <div class="vbar-label">${t}</div>
+      </div>`;
+    }).join('')+`</div>`;
 
+  // Por Cliente — Barras Horizontais
   const clientes={};
   data.forEach(a=>{if(!clientes[a.cliente])clientes[a.cliente]={total:0,nc:0};clientes[a.cliente].total+=a.qtdTotal;clientes[a.cliente].nc+=a.qtdNC;});
-  document.getElementById('d-cli-tbody').innerHTML=Object.keys(clientes).length?Object.entries(clientes).sort((a,b)=>b[1].total-a[1].total).map(([c,v])=>{
-    const p=v.total?((v.nc/v.total)*100).toFixed(1):'0.0';
-    return `<tr><td><strong>${c}</strong></td><td>${v.total}</td><td>${v.nc>0?`<span class="badge badge-red">${v.nc}</span>`:0}</td><td>${p}%</td></tr>`;
-  }).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--gray-500);padding:20px">Sem dados</td></tr>';
+  const clienteEntries=Object.entries(clientes).sort((a,b)=>b[1].total-a[1].total);
+  const maxC=Math.max(...clienteEntries.map(([,v])=>v.total))||1;
+  document.getElementById('cliente-bar-chart').innerHTML = clienteEntries.length ? `<div class="hbar-chart">`+
+    clienteEntries.map(([c,v])=>{
+      const w=((v.total/maxC)*100).toFixed(0);
+      return `<div class="hbar-row">
+        <div class="hbar-label">${c}</div>
+        <div class="hbar-track"><div class="hbar-fill" style="width:${w}%"></div></div>
+        <div class="hbar-value">${v.total}</div>
+      </div>`;
+    }).join('')+`</div>` : '<div class="empty"><div class="empty-icon">📊</div><p>Sem dados</p></div>';
 
-  // Ranking de inspetores
+  // Ranking de inspetores — Gráfico Funil
   const inspetores={};
   data.forEach(a=>{
     const key=normalizeRE(a.re);
@@ -1074,10 +1108,18 @@ function renderDashboard(){
     inspetores[key].nc+=a.qtdNC;
   });
   const ranking=Object.values(inspetores).sort((a,b)=>b.total-a.total);
-  document.getElementById('d-insp-tbody').innerHTML=ranking.length?ranking.map((r,i)=>{
-    const p=r.total?((r.nc/r.total)*100).toFixed(1):'0.0';
-    return `<tr><td><strong>${i+1}º</strong></td><td>${r.nome}</td><td><span class="badge badge-yellow">${r.turno}</span></td><td>${r.total}</td><td>${r.nc>0?`<span class="badge badge-red">${r.nc}</span>`:0}</td><td>${p}%</td></tr>`;
-  }).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--gray-500);padding:20px">Sem dados</td></tr>';
+  const maxR=ranking.length?ranking[0].total:1;
+  const funnelColors=['#1B3A5C','#2A5C80','#3B7CA8','#5A93B8','#7AAAC8','#9BC1D8'];
+  document.getElementById('insp-funnel-chart').innerHTML = ranking.length ? `<div class="funnel-chart">`+
+    ranking.map((r,i)=>{
+      const widthPct=30+((r.total/maxR)*70);
+      const color=funnelColors[Math.min(i,funnelColors.length-1)];
+      return `<div class="funnel-row" style="width:${widthPct}%;background:${color}">
+        ${i===0?'<span class="funnel-crown">👑</span>':''}
+        <span class="funnel-name">${r.nome}</span>
+        <span class="funnel-val">${r.total} pç</span>
+      </div>`;
+    }).join('')+`</div>` : '<div class="empty"><div class="empty-icon">🏆</div><p>Sem dados</p></div>';
 
   // Defeitos com qtd total
   const defs={};
