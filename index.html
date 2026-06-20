@@ -1369,6 +1369,8 @@ document.querySelectorAll('.modal-overlay').forEach(el=>{
 
 // ══ UTILS ══
 function setScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');}
+let dashDateInitialized = false;
+
 function showTab(n){
   if(n==='dashboard' && (!state.currentUser || state.currentUser.perfil!=='admin')) return;
   if(n==='admin' && (!state.currentUser || state.currentUser.perfil!=='admin')) return;
@@ -1377,10 +1379,26 @@ function showTab(n){
   const idx=['turno','dashboard','historico','admin'].indexOf(n);
   document.querySelectorAll('.nav-tab')[idx]?.classList.add('active');
   document.getElementById('tab-'+n).classList.add('active');
-  if(n==='dashboard')renderDashboard();
+  if(n==='dashboard'){
+    if(!dashDateInitialized){
+      const hojeISO = toISODate(new Date());
+      document.getElementById('dash-ini').value = hojeISO;
+      document.getElementById('dash-fim').value = hojeISO;
+      dashDateInitialized = true;
+    }
+    renderDashboard();
+  }
   if(n==='historico')renderHistorico();
   if(n==='admin')renderAdminTable();
 }
+
+function toISODate(d){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
 function showEl(id,msg){const el=document.getElementById(id);if(msg)el.textContent=msg;el.style.display='block';}
 function hideEl(id){document.getElementById(id).style.display='none';}
 function parseData(str){const[d,m,y]=str.split('/');return new Date(`${y}-${m}-${d}`);}
