@@ -411,27 +411,74 @@ const ALL_DEFS = [...DEFEITOS.usinagem,...DEFEITOS.fundicao];
 // Estado dos defeitos selecionados: {cod: qtd}
 let defSelecionados = {};
 
-const KEYS={users:'cs1_users',apontamentos:'cs1_apontamentos'};
+// ══ URL DO GOOGLE APPS SCRIPT ══
+const API_URL = 'https://script.google.com/macros/s/AKfycbwSnQfA6b-2Wyl-oCfNkYp9NB7aRBXI1RwB5gmKnsWtTp49GydzjZKIx6-m4W0nYT4x/exec';
+
 let state={currentUser:null,turnoStart:null,timerInterval:null,deleteTarget:null,users:[],apontamentos:[]};
 
-function loadData(){
-  try{
-    const u=localStorage.getItem(KEYS.users);
-    const a=localStorage.getItem(KEYS.apontamentos);
-    state.users=u?JSON.parse(u):getDefaultUsers();
-    state.apontamentos=a?JSON.parse(a):[];
-  }catch(e){state.users=getDefaultUsers();state.apontamentos=[];}
+// ══ API HELPERS ══
+async function apiGet(action){
+  const res = await fetch(`${API_URL}?action=${action}`);
+  return res.json();
 }
-function saveUsers(){try{localStorage.setItem(KEYS.users,JSON.stringify(state.users));showSaved();}catch(e){}}
-function saveApontamentos(){try{localStorage.setItem(KEYS.apontamentos,JSON.stringify(state.apontamentos));showSaved();}catch(e){}}
-function showSaved(){const el=document.getElementById('saving-indicator');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1500);}
-function getDefaultUsers(){return[
-  {nome:'Admin MRHB',re:'00000',senha:'admin123',turno:'T1',perfil:'admin'},
-  {nome:'João Silva',re:'11111',senha:'1234',turno:'T1',perfil:'inspetor'},
-  {nome:'Maria Costa',re:'22222',senha:'1234',turno:'T2',perfil:'inspetor'},
-];}
+async function apiPost(action, data){
+  const params = new URLSearchParams();
+  params.append('action', action);
+  if(data!==undefined) params.append('data', JSON.stringify(data));
+  const res = await fetch(API_URL, { method:'POST', body: params });
+  return res.json();
+}
 
-window.addEventListener('load',()=>{loadData();buildDefeitosModal();updateDefeitoSelects();});
+async function loadData(){
+  showLoading(true);
+  try{
+    const [uResp, aResp] = await Promise.all([
+      apiGet('getUsuarios'),
+      apiGet('getApontamentos')
+    ]);
+    state.users = (uResp.users||[]).map(u=>({
+      nome:u.nome, re:String(u.re), senha:String(u.senha), turno:u.turno, perfil:u.perfil
+    }));
+    state.apontamentos = (aResp.apontamentos||[]).map(a=>({
+      id:a.id, data:a.data, hora:a.hora, inspetor:a.inspetor, re:String(a.re), turno:a.turno,
+      pn:String(a.pn), cliente:a.cliente, qtdTotal:Number(a.qtdTotal)||0, qtdNC:Number(a.qtdNC)||0,
+      defeitos:a.defeitos||{}, obs:a.obs||''
+    }));
+  }catch(e){
+    alert('Não foi possível conectar ao servidor de dados. Verifique sua conexão com a internet.');
+    state.users=[]; state.apontamentos=[];
+  }
+  showLoading(false);
+}
+
+async function saveUsers(){
+  // Usuários são salvos individualmente via addUsuario/removerUsuario (ver funções abaixo)
+  showSaved();
+}
+async function saveApontamentos(){
+  // Apontamentos são salvos individualmente via addApontamento/deleteApontamento
+  showSaved();
+}
+
+function showSaved(){const el=document.getElementById('saving-indicator');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1500);}
+
+function showLoading(on){
+  let el=document.getElementById('loading-overlay');
+  if(!el){
+    el=document.createElement('div');
+    el.id='loading-overlay';
+    el.style.cssText='position:fixed;inset:0;background:rgba(15,15,15,0.85);z-index:999;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:600;';
+    el.innerHTML='Carregando dados...';
+    document.body.appendChild(el);
+  }
+  el.style.display = on ? 'flex' : 'none';
+}
+
+window.addEventListener('load', async ()=>{
+  await loadData();
+  buildDefeitosModal();
+  updateDefeitoSelects();
+});
 
 // ══ MODAL DEFEITOS ══
 function buildDefeitosModal(){
@@ -643,7 +690,7 @@ function startTimer(){
 }
 
 // ══ APONTAMENTOS ══
-function registrarApontamento(){
+async function registrarApontamento(){
   const pn=document.getElementById('ap-pn').value.trim();
   const cliente=document.getElementById('ap-cliente').value;
   const qtdTotal=parseInt(document.getElementById('ap-qtd-total').value)||0;
@@ -658,7 +705,7 @@ function registrarApontamento(){
     return;
   }
   const now=new Date();
-  state.apontamentos.push({
+  const novoApontamento={
     id:Date.now(),
     data:now.toLocaleDateString('pt-BR'),
     hora:now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
@@ -666,10 +713,20 @@ function registrarApontamento(){
     pn,cliente,qtdTotal,qtdNC,
     defeitos:{...defSelecionados},
     obs:document.getElementById('ap-obs').value.trim()
-  });
-  saveApontamentos(); limparForm(); renderTurnoTable(); renderTurnoKPIs();
-  const s=document.getElementById('ap-success');
-  s.style.display='block'; setTimeout(()=>s.style.display='none',2500);
+  };
+
+  const btn=event?.target;
+  if(btn) btn.disabled=true;
+  try{
+    await apiPost('addApontamento', novoApontamento);
+    state.apontamentos.push(novoApontamento);
+    limparForm(); renderTurnoTable(); renderTurnoKPIs(); showSaved();
+    const s=document.getElementById('ap-success');
+    s.style.display='block'; setTimeout(()=>s.style.display='none',2500);
+  }catch(e){
+    alert('Erro ao salvar o apontamento. Verifique sua conexão e tente novamente.');
+  }
+  if(btn) btn.disabled=false;
 }
 
 function limparForm(){
@@ -884,7 +941,7 @@ function renderHistorico(){
 function limparHist(){['h-data','h-pn'].forEach(id=>document.getElementById(id).value='');document.getElementById('h-cli').value='';document.getElementById('h-def').value='';renderHistorico();}
 
 // ══ ADMIN ══
-function cadastrarUsuario(){
+async function cadastrarUsuario(){
   const nome=document.getElementById('adm-nome').value.trim();
   const re=document.getElementById('adm-re').value.trim();
   const turno=document.getElementById('adm-turno').value;
@@ -893,11 +950,15 @@ function cadastrarUsuario(){
   hideEl('adm-success');hideEl('adm-error');
   if(!nome||!re||!senha){showEl('adm-error','Preencha todos os campos.');return;}
   if(state.users.find(u=>u.re===re)){showEl('adm-error','Já existe um usuário com este RE.');return;}
-  state.users.push({nome,re,turno,perfil,senha});
-  saveUsers();
-  ['adm-nome','adm-re','adm-senha'].forEach(id=>document.getElementById(id).value='');
-  showEl('adm-success');setTimeout(()=>hideEl('adm-success'),3000);
-  renderAdminTable();
+  try{
+    await apiPost('addUsuario', {nome,re,turno,perfil,senha});
+    state.users.push({nome,re,turno,perfil,senha});
+    ['adm-nome','adm-re','adm-senha'].forEach(id=>document.getElementById(id).value='');
+    showEl('adm-success');setTimeout(()=>hideEl('adm-success'),3000);
+    renderAdminTable();
+  }catch(e){
+    showEl('adm-error','Erro ao cadastrar. Verifique sua conexão.');
+  }
 }
 
 function renderAdminTable(){
@@ -909,20 +970,42 @@ function renderAdminTable(){
     </tr>`).join('');
 }
 
-function removerUsuario(re){
+async function removerUsuario(re){
   if(re===state.currentUser?.re){alert('Não é possível remover o usuário logado.');return;}
   if(!confirm('Remover este usuário?'))return;
-  state.users=state.users.filter(u=>u.re!==re);
-  saveUsers();renderAdminTable();
+  try{
+    const params = new URLSearchParams();
+    params.append('action','deleteUsuario');
+    params.append('re', re);
+    await fetch(API_URL, { method:'POST', body: params });
+    state.users=state.users.filter(u=>u.re!==re);
+    renderAdminTable();
+  }catch(e){
+    alert('Erro ao remover usuário. Verifique sua conexão.');
+  }
 }
 
 // ══ MODAIS ══
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function openDeleteModal(id){state.deleteTarget=id;openModal('modal-del');}
-function confirmarDelete(){
-  state.apontamentos=state.apontamentos.filter(a=>a.id!==state.deleteTarget);
-  saveApontamentos();closeModal('modal-del');renderTurnoTable();renderTurnoKPIs();
+async function confirmarDelete(){
+  const id = state.deleteTarget;
+  try{
+    await apiPostDeleteApontamento(id);
+    state.apontamentos=state.apontamentos.filter(a=>a.id!==id);
+    closeModal('modal-del');renderTurnoTable();renderTurnoKPIs();
+  }catch(e){
+    alert('Erro ao remover. Verifique sua conexão.');
+  }
+}
+
+async function apiPostDeleteApontamento(id){
+  const params = new URLSearchParams();
+  params.append('action','deleteApontamento');
+  params.append('id', id);
+  const res = await fetch(API_URL, { method:'POST', body: params });
+  return res.json();
 }
 
 // Fechar modal clicando fora
