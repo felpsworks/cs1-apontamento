@@ -234,9 +234,14 @@
         <div class="card-title">Novo Apontamento</div>
         <div id="ap-success" class="alert alert-success" style="display:none">✔ Apontamento registrado!</div>
         <div class="form-col">
-          <div class="form-group"><label>Nº da Peça (PN)</label><input type="text" id="ap-pn" placeholder="Ex: 2711" /></div>
-          <div class="form-group"><label>Cliente</label>
-            <select id="ap-cliente"><option value="">Selecione...</option><option>ZF</option><option>EATON</option><option>AAM</option><option>GM</option><option>SCANIA</option><option>MBB</option><option>MWM</option><option>VOLVO</option><option>Outro</option></select>
+          <div class="form-group">
+            <label>Nº da Peça (PN)</label>
+            <input type="text" id="ap-pn" placeholder="Ex: 2711" maxlength="4" inputmode="numeric" oninput="onPnInput(this)" />
+          </div>
+          <div class="form-group">
+            <label>Cliente</label>
+            <input type="text" id="ap-cliente" readonly placeholder="Preenchido automaticamente pelo PN" style="background:var(--gray-100);color:var(--gray-700);cursor:not-allowed;font-weight:600;" />
+            <div id="ap-cliente-msg" style="font-size:11px;color:var(--red);margin-top:4px;display:none">PN não cadastrado. Verifique o número informado.</div>
           </div>
           <div class="form-group"><label>Qtd. Inspecionada</label><input type="number" id="ap-qtd-total" placeholder="0" min="0" /></div>
           <div class="form-group"><label>Qtd. Não Conforme</label><input type="number" id="ap-qtd-nc" placeholder="0" min="0" /></div>
@@ -407,6 +412,225 @@ const DEFEITOS = {
 };
 
 const ALL_DEFS = [...DEFEITOS.usinagem,...DEFEITOS.fundicao];
+
+const PN_CLIENTE = {
+  '2020':'EATON',
+  '2042':'EATON',
+  '2043':'EATON',
+  '2057':'EATON',
+  '2196':'MBB',
+  '2197':'MBB',
+  '2201':'MBB',
+  '2218':'EATON',
+  '2248':'MBB',
+  '2250':'MBB',
+  '2259':'MBB',
+  '2283':'EATON',
+  '2319':'EATON',
+  '2327':'EATON',
+  '2341':'EATON',
+  '2348':'GM',
+  '2358':'MBB',
+  '2365':'EATON',
+  '2366':'EATON',
+  '2367':'EATON',
+  '2379':'MBB',
+  '2390':'EATON',
+  '2391':'EATON',
+  '2392':'EATON',
+  '2393':'EATON',
+  '2394':'EATON',
+  '2395':'EATON',
+  '2396':'EATON',
+  '2397':'EATON',
+  '2400':'MBB',
+  '2402':'MBB',
+  '2406':'MBB',
+  '2407':'MBB',
+  '2408':'MBB',
+  '2409':'MBB',
+  '2410':'MBB',
+  '2411':'MBB',
+  '2412':'MBB',
+  '2413':'MBB',
+  '2414':'MBB',
+  '2415':'MBB',
+  '2416':'MBB',
+  '2420':'MBB',
+  '2423':'MBB',
+  '2424':'MBB',
+  '2425':'MBB',
+  '2426':'MBB',
+  '2427':'MBB',
+  '2428':'MBB',
+  '2429':'MBB',
+  '2430':'MBB',
+  '2431':'MBB',
+  '2432':'MBB',
+  '2434':'EATON',
+  '2435':'EATON',
+  '2436':'EATON',
+  '2438':'EATON',
+  '2439':'EATON',
+  '2440':'EATON',
+  '2442':'EATON',
+  '2443':'EATON',
+  '2444':'EATON',
+  '2445':'EATON',
+  '2446':'EATON',
+  '2455':'EATON',
+  '2457':'EATON',
+  '2458':'EATON',
+  '2459':'EATON',
+  '2462':'MBB',
+  '2463':'MBB',
+  '2471':'MBB',
+  '2472':'MBB',
+  '2474':'MBB',
+  '2475':'EATON',
+  '2476':'EATON',
+  '2477':'EATON',
+  '2478':'AAM',
+  '2479':'EATON',
+  '2485':'EATON',
+  '2486':'EATON',
+  '2487':'MBB',
+  '2488':'EATON',
+  '2492':'EATON',
+  '2493':'EATON',
+  '2494':'EATON',
+  '2496':'EATON',
+  '2497':'MBB',
+  '2498':'EATON',
+  '2499':'EATON',
+  '2500':'EATON',
+  '2501':'EATON',
+  '2504':'EATON',
+  '2505':'EATON',
+  '2506':'EATON',
+  '2507':'EATON',
+  '2508':'EATON',
+  '2509':'EATON',
+  '2510':'EATON',
+  '2511':'EATON',
+  '2512':'EATON',
+  '2513':'EATON',
+  '2514':'EATON',
+  '2515':'EATON',
+  '2516':'EATON',
+  '2517':'EATON',
+  '2518':'EATON',
+  '2519':'EATON',
+  '2523':'EATON',
+  '2524':'EATON',
+  '2525':'EATON',
+  '2526':'EATON',
+  '2528':'EATON',
+  '2531':'EATON',
+  '2552':'EATON',
+  '2555':'EATON',
+  '2556':'EATON',
+  '2557':'EATON',
+  '2564':'ZF',
+  '2565':'ZF',
+  '2566':'ZF',
+  '2567':'ZF',
+  '2569':'AAM',
+  '2570':'EATON',
+  '2572':'EATON',
+  '2573':'GM',
+  '2574':'GM',
+  '2575':'GM',
+  '2581':'GM',
+  '2586':'GM',
+  '2587':'EATON',
+  '2591':'EATON',
+  '2592':'MWM',
+  '2593':'MWM',
+  '2599':'EATON',
+  '2615':'MBB',
+  '2616':'MBB',
+  '2617':'EATON',
+  '2618':'EATON',
+  '2619':'GM',
+  '2621':'GM',
+  '2624':'MBB',
+  '2625':'MBB',
+  '2626':'EATON',
+  '2628':'EATON',
+  '2629':'EATON',
+  '2630':'EATON',
+  '2632':'ZF',
+  '2633':'ZF',
+  '2634':'MBB',
+  '2635':'MBB',
+  '2636':'VOLVO',
+  '2641':'EATON',
+  '2642':'GM',
+  '2643':'EATON',
+  '2644':'EATON',
+  '2647':'EATON',
+  '2648':'EATON',
+  '2649':'EATON',
+  '2655':'EATON',
+  '2656':'EATON',
+  '2660':'EATON',
+  '2661':'EATON',
+  '2662':'EATON',
+  '2663':'EATON',
+  '2665':'MBB',
+  '2666':'MBB',
+  '2667':'EATON',
+  '2668':'EATON',
+  '2669':'EATON',
+  '2670':'EATON',
+  '2671':'EATON',
+  '2674':'MBB',
+  '2675':'MBB',
+  '2676':'MBB',
+  '2677':'MBB',
+  '2678':'MBB',
+  '2679':'MBB',
+  '2680':'MBB',
+  '2681':'GM',
+  '2682':'ZF',
+  '2683':'ZF',
+  '2685':'EATON',
+  '2686':'EATON',
+  '2687':'EATON',
+  '2692':'MWM',
+  '2693':'MWM',
+  '2694':'MWM',
+  '2695':'MWM',
+  '2697':'MWM',
+  '2698':'VOLVO',
+  '2700':'MBB',
+  '2701':'MBB',
+  '2704':'GM',
+  '2709':'MWM',
+  '2711':'MWM',
+  '2718':'EATON',
+  '2736':'VOLVO',
+  '2737':'VOLVO',
+  '2738':'VOLVO',
+  '2742':'GM',
+  '2744':'SCANIA',
+  '2745':'SCANIA',
+  '2746':'SCANIA',
+  '2747':'SCANIA',
+  '2748':'EATON',
+  '2749':'SCANIA',
+  '2750':'SCANIA',
+  '2751':'SCANIA',
+  '2754':'SCANIA',
+  '2772':'ZF',
+  '2792':'MWM',
+  '2793':'MWM',
+  '2794':'MWM',
+  '2844':'SCANIA',
+  '2847':'SCANIA',
+  '2854':'SCANIA'
+};
 
 // Estado dos defeitos selecionados: {cod: qtd}
 let defSelecionados = {};
@@ -642,10 +866,14 @@ function updateDefeitoSelects(){
 }
 
 // ══ LOGIN ══
+function normalizeRE(re){
+  return String(re).trim().replace(/^0+(?=\d)/, '');
+}
+
 function doLogin(){
-  const re=document.getElementById('login-re').value.trim();
+  const re=normalizeRE(document.getElementById('login-re').value);
   const senha=document.getElementById('login-senha').value;
-  const user=state.users.find(u=>u.re===re&&u.senha===senha);
+  const user=state.users.find(u=>normalizeRE(u.re)===re&&String(u.senha)===senha);
   if(!user){showEl('login-error','RE ou senha incorretos.');return;}
   hideEl('login-error');
   state.currentUser=user; state.turnoStart=new Date();
@@ -695,7 +923,9 @@ async function registrarApontamento(){
   const cliente=document.getElementById('ap-cliente').value;
   const qtdTotal=parseInt(document.getElementById('ap-qtd-total').value)||0;
   const qtdNC=parseInt(document.getElementById('ap-qtd-nc').value)||0;
-  if(!pn||!cliente||qtdTotal===0){alert('Preencha PN, Cliente e Qtd. Inspecionada.');return;}
+  if(pn.length!==4){alert('Informe um PN válido com 4 dígitos.');return;}
+  if(!cliente){alert('PN não cadastrado na lista de clientes. Verifique o número informado ou contate o Admin.');return;}
+  if(qtdTotal===0){alert('Preencha a Qtd. Inspecionada.');return;}
 
   // Valida coerência defeitos x qtdNC
   const somaDefeitos=Object.values(defSelecionados).reduce((s,v)=>s+v,0);
@@ -732,13 +962,36 @@ async function registrarApontamento(){
 function limparForm(){
   ['ap-pn','ap-qtd-total','ap-qtd-nc','ap-obs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ap-cliente').value='';
+  hideEl('ap-cliente-msg');
   limparDefeitos();
+}
+
+function onPnInput(input){
+  // Permite apenas números, máximo 4 dígitos
+  input.value = input.value.replace(/\D/g,'').slice(0,4);
+  const pn = input.value;
+  const clienteField = document.getElementById('ap-cliente');
+  const msgField = document.getElementById('ap-cliente-msg');
+
+  if(pn.length===4){
+    const cliente = PN_CLIENTE[pn];
+    if(cliente){
+      clienteField.value = cliente;
+      hideEl('ap-cliente-msg');
+    } else {
+      clienteField.value = '';
+      showEl('ap-cliente-msg');
+    }
+  } else {
+    clienteField.value = '';
+    hideEl('ap-cliente-msg');
+  }
 }
 
 function renderTurnoTable(){
   const tbody=document.getElementById('turno-tbody');
   const hoje=new Date().toLocaleDateString('pt-BR');
-  const meus=state.apontamentos.filter(a=>a.re===state.currentUser.re&&a.data===hoje);
+  const meus=state.apontamentos.filter(a=>normalizeRE(a.re)===normalizeRE(state.currentUser.re)&&a.data===hoje);
   if(!meus.length){tbody.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div><p>Nenhum apontamento neste turno ainda.</p></div></td></tr>';return;}
   tbody.innerHTML=[...meus].reverse().map(a=>`
     <tr>
@@ -761,7 +1014,7 @@ function renderDefTags(defeitos){
 
 function renderTurnoKPIs(){
   const hoje=new Date().toLocaleDateString('pt-BR');
-  const meus=state.apontamentos.filter(a=>a.re===state.currentUser?.re&&a.data===hoje);
+  const meus=state.apontamentos.filter(a=>normalizeRE(a.re)===normalizeRE(state.currentUser?.re||'')&&a.data===hoje);
   const total=meus.reduce((s,a)=>s+a.qtdTotal,0);
   const nc=meus.reduce((s,a)=>s+a.qtdNC,0);
   document.getElementById('kpi-total').textContent=total;
@@ -949,7 +1202,7 @@ async function cadastrarUsuario(){
   const senha=document.getElementById('adm-senha').value;
   hideEl('adm-success');hideEl('adm-error');
   if(!nome||!re||!senha){showEl('adm-error','Preencha todos os campos.');return;}
-  if(state.users.find(u=>u.re===re)){showEl('adm-error','Já existe um usuário com este RE.');return;}
+  if(state.users.find(u=>normalizeRE(u.re)===normalizeRE(re))){showEl('adm-error','Já existe um usuário com este RE.');return;}
   try{
     await apiPost('addUsuario', {nome,re,turno,perfil,senha});
     state.users.push({nome,re,turno,perfil,senha});
@@ -966,19 +1219,19 @@ function renderAdminTable(){
     <tr>
       <td>${u.nome}</td><td>${u.re}</td><td>${u.turno}</td>
       <td><span class="badge ${u.perfil==='admin'?'badge-red':'badge-green'}">${u.perfil}</span></td>
-      <td>${u.re!=='00000'?`<button class="btn btn-secondary btn-sm" onclick="removerUsuario('${u.re}')">✕</button>`:''}</td>
+      <td>${normalizeRE(u.re)!=='0'?`<button class="btn btn-secondary btn-sm" onclick="removerUsuario('${u.re}')">✕</button>`:''}</td>
     </tr>`).join('');
 }
 
 async function removerUsuario(re){
-  if(re===state.currentUser?.re){alert('Não é possível remover o usuário logado.');return;}
+  if(normalizeRE(re)===normalizeRE(state.currentUser?.re||'')){alert('Não é possível remover o usuário logado.');return;}
   if(!confirm('Remover este usuário?'))return;
   try{
     const params = new URLSearchParams();
     params.append('action','deleteUsuario');
     params.append('re', re);
     await fetch(API_URL, { method:'POST', body: params });
-    state.users=state.users.filter(u=>u.re!==re);
+    state.users=state.users.filter(u=>normalizeRE(u.re)!==normalizeRE(re));
     renderAdminTable();
   }catch(e){
     alert('Erro ao remover usuário. Verifique sua conexão.');
