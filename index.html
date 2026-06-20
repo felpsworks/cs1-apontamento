@@ -109,8 +109,28 @@
 
   .funnel-chart{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;}
   .funnel-row{position:relative;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;border-radius:4px;padding:10px 16px;transition:width 0.4s ease;min-width:120px;}
-  .funnel-crown{position:absolute;left:-26px;font-size:18px;}
-  .funnel-name{margin-right:8px;}
+  .funnel-crown{font-size:18px;margin-right:8px;}
+  .funnel-name{margin-right:4px;}
+  .funnel-val{margin-left:auto;}
+
+  /* GRID 2x2 DASHBOARD */
+  .dash-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  @media(max-width:768px){.dash-charts-grid{grid-template-columns:1fr;}}
+
+  /* DONUT ORIGEM */
+  .donut-wrap{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;}
+  .donut-legend-simple{display:flex;flex-direction:column;gap:10px;}
+  .donut-legend-simple-item{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .donut-legend-simple-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .donut-legend-simple-label{color:var(--gray-700);font-weight:600;}
+  .donut-legend-simple-val{font-weight:800;color:var(--black);margin-left:auto;}
+
+  /* GAUGE / VELOCÍMETRO */
+  .gauge-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .gauge-item{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .gauge-name{font-size:12px;font-weight:700;color:var(--gray-700);text-align:center;min-height:32px;display:flex;align-items:center;}
+  .gauge-val{font-size:20px;font-weight:800;color:var(--black);}
+  .gauge-sub{font-size:11px;color:var(--gray-500);}
   .funnel-val{opacity:0.9;font-weight:600;}
   .turno-bar-label{font-size:13px;font-weight:700;color:var(--gray-500);margin-bottom:6px;}
   .turno-bar-total{font-size:26px;font-weight:800;}
@@ -325,9 +345,13 @@
         <div class="kpi"><div class="kpi-label">Registros</div><div class="kpi-value" id="d-reg">0</div></div>
       </div>
 
-      <div class="card"><div class="card-title">Produtividade por Turno</div><div class="chart-container" id="turno-bar-chart"></div></div>
-      <div class="card"><div class="card-title">Por Cliente</div><div class="chart-container" id="cliente-bar-chart"></div></div>
-      <div class="card"><div class="card-title">Ranking de Inspetores</div><div class="chart-container" id="insp-funnel-chart"></div></div>
+      <div class="dash-charts-grid">
+        <div class="card"><div class="card-title">Produtividade por Turno</div><div class="chart-container" id="turno-bar-chart"></div></div>
+        <div class="card"><div class="card-title">Por Cliente</div><div class="chart-container" id="cliente-bar-chart"></div></div>
+        <div class="card"><div class="card-title">Ranking de Inspetores</div><div class="chart-container" id="insp-funnel-chart"></div></div>
+        <div class="card"><div class="card-title">Origem do Defeito</div><div class="chart-container" id="origem-donut-chart"></div></div>
+      </div>
+      <div class="card"><div class="card-title">Top 3 Defeitos</div><div class="chart-container" id="top-defeitos-gauge"></div></div>
       <div class="card"><div class="card-title">Defeitos mais frequentes</div><div class="table-wrap"><table><thead><tr><th>Defeito</th><th>Ocorrências</th><th>Qtd. Peças NC</th></tr></thead><tbody id="d-def-tbody"></tbody></table></div></div>
     </div>
 
@@ -1115,8 +1139,8 @@ function renderDashboard(){
       const widthPct=30+((r.total/maxR)*70);
       const color=funnelColors[Math.min(i,funnelColors.length-1)];
       return `<div class="funnel-row" style="width:${widthPct}%;background:${color}">
-        ${i===0?'<span class="funnel-crown">👑</span>':''}
         <span class="funnel-name">${r.nome}</span>
+        ${i===0?'<span class="funnel-crown">👑</span>':''}
         <span class="funnel-val">${r.total} pç</span>
       </div>`;
     }).join('')+`</div>` : '<div class="empty"><div class="empty-icon">🏆</div><p>Sem dados</p></div>';
@@ -1134,6 +1158,65 @@ function renderDashboard(){
     const d=ALL_DEFS.find(x=>x.cod===cod);
     return `<tr><td>${d?d.desc:cod}</td><td>${v.ocorrencias}</td><td><span class="badge badge-red">${v.totalPecas}</span></td></tr>`;
   }).join(''):'<tr><td colspan="3" style="text-align:center;color:var(--gray-500);padding:20px">Sem dados</td></tr>';
+
+  // Origem do Defeito — Donut US (Usinagem) x IN (Fundição/Injeção)
+  let qtdUS=0, qtdIN=0;
+  Object.entries(defs).forEach(([cod,v])=>{
+    if(cod.startsWith('U')) qtdUS+=v.totalPecas;
+    else if(cod.startsWith('F')) qtdIN+=v.totalPecas;
+  });
+  const totalOrigem=qtdUS+qtdIN;
+  const donutEl=document.getElementById('origem-donut-chart');
+  if(totalOrigem===0){
+    donutEl.innerHTML='<div class="empty"><div class="empty-icon">🍩</div><p>Sem dados de defeitos</p></div>';
+  } else {
+    const size=160, r=62, cx=size/2, cy=size/2, strokeW=28;
+    const circumference=2*Math.PI*r;
+    const fracUS=qtdUS/totalOrigem;
+    const dashUS=fracUS*circumference;
+    const dashIN=circumference-dashUS;
+    donutEl.innerHTML=`<div class="donut-wrap">
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#3B7CA8" stroke-width="${strokeW}" stroke-dasharray="${dashUS} ${circumference-dashUS}" stroke-dashoffset="0" transform="rotate(-90 ${cx} ${cy})"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1B3A5C" stroke-width="${strokeW}" stroke-dasharray="${dashIN} ${circumference-dashIN}" stroke-dashoffset="${-dashUS}" transform="rotate(-90 ${cx} ${cy})"/>
+        <circle cx="${cx}" cy="${cy}" r="${r-strokeW/2-2}" fill="white"/>
+        <text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="20" font-weight="800" fill="#0F0F0F">${totalOrigem}</text>
+        <text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="9" fill="#6B6B6B">peças NC</text>
+      </svg>
+      <div class="donut-legend-simple">
+        <div class="donut-legend-simple-item"><span class="donut-legend-simple-dot" style="background:#3B7CA8"></span><span class="donut-legend-simple-label">US — Usinagem</span><span class="donut-legend-simple-val">${qtdUS}</span></div>
+        <div class="donut-legend-simple-item"><span class="donut-legend-simple-dot" style="background:#1B3A5C"></span><span class="donut-legend-simple-label">IN — Fundição/Injeção</span><span class="donut-legend-simple-val">${qtdIN}</span></div>
+      </div>
+    </div>`;
+  }
+
+  // Top 3 Defeitos — Velocímetro
+  const top3=Object.entries(defs).sort((a,b)=>b[1].totalPecas-a[1].totalPecas).slice(0,3);
+  const gaugeEl=document.getElementById('top-defeitos-gauge');
+  if(!top3.length){
+    gaugeEl.innerHTML='<div class="empty"><div class="empty-icon">⏱️</div><p>Sem dados de defeitos</p></div>';
+  } else {
+    const maxTop=top3[0][1].totalPecas||1;
+    gaugeEl.innerHTML='<div class="gauge-row">'+top3.map(([cod,v])=>{
+      const d=ALL_DEFS.find(x=>x.cod===cod);
+      const pct=Math.min(v.totalPecas/maxTop,1);
+      const angle=pct*180;
+      const needleX=80+60*Math.cos(Math.PI-(angle*Math.PI/180));
+      const needleY=80-60*Math.sin(Math.PI-(angle*Math.PI/180));
+      const arcColor = pct>0.66?'#1B3A5C':pct>0.33?'#3B7CA8':'#7AAAC8';
+      return `<div class="gauge-item">
+        <svg width="160" height="92" viewBox="0 0 160 92">
+          <path d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="#F2F2F2" stroke-width="14" stroke-linecap="round"/>
+          <path d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="${arcColor}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${pct*188.5} 188.5"/>
+          <line x1="80" y1="80" x2="${needleX}" y2="${needleY}" stroke="#0F0F0F" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="80" cy="80" r="5" fill="#0F0F0F"/>
+        </svg>
+        <div class="gauge-name">${d?d.desc:cod}</div>
+        <div class="gauge-val">${v.totalPecas}</div>
+        <div class="gauge-sub">peças NC</div>
+      </div>`;
+    }).join('')+'</div>';
+  }
 }
 
 function limparDash(){['dash-ini','dash-fim'].forEach(id=>document.getElementById(id).value='');document.getElementById('dash-cli').value='';document.getElementById('dash-turno').value='';document.getElementById('dash-insp').value='';document.getElementById('dash-def').value='';renderDashboard();}
