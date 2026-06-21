@@ -40,8 +40,9 @@
 
   .form-group{margin-bottom:16px;}
   .form-group label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-700);margin-bottom:6px;}
-  .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray-300);border-radius:5px;font-size:14px;font-family:var(--font);background:var(--white);transition:border-color 0.2s;}
-  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--red);}
+  .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray-300);border-radius:5px;font-size:14px;font-family:var(--font);background:var(--gray-100);transition:border-color 0.2s;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--red);background:var(--white);}
+  .form-group input[readonly]{cursor:not-allowed;color:var(--gray-700);font-weight:600;}
   .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
   .btn{padding:10px 20px;border:none;border-radius:5px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all 0.2s;}
@@ -49,6 +50,10 @@
   .btn-primary:hover{background:var(--red-dark);}
   .btn-secondary{background:var(--gray-100);color:var(--gray-700);border:1.5px solid var(--gray-300);}
   .btn-secondary:hover{background:var(--gray-300);}
+  .btn-success{background:var(--green);color:white;width:100%;padding:12px;}
+  .btn-success:hover{background:#145e2f;}
+  .btn-warning{background:#E8A93B;color:var(--red-dark);font-weight:700;border:none;}
+  .btn-warning:hover{background:#D49620;}
   .btn-sm{padding:5px 10px;font-size:12px;}
 
   .main{max-width:1200px;margin:0 auto;padding:24px 16px;}
@@ -132,6 +137,19 @@
   .gauge-name{font-size:12px;font-weight:700;color:var(--gray-700);text-align:center;min-height:32px;display:flex;align-items:center;}
   .gauge-val{font-size:20px;font-weight:800;color:var(--black);}
   .gauge-sub{font-size:11px;color:var(--gray-500);}
+
+  /* OBSERVAÇÕES RÁPIDAS */
+  .obs-quick-options{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+  .obs-quick-chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid var(--gray-300);border-radius:5px;cursor:pointer;font-size:13px;font-weight:500;color:var(--gray-700);background:var(--gray-100);transition:all 0.15s;text-transform:none;}
+  .obs-quick-chip:hover{border-color:var(--red);}
+  .obs-quick-chip.checked{border-color:var(--red);background:var(--red-light);color:var(--red-dark);font-weight:700;}
+  .obs-quick-checkbox{accent-color:var(--red);width:15px;height:15px;cursor:pointer;flex-shrink:0;}
+
+  /* RASTREABILIDADE NO MODAL DE DEFEITOS */
+  .def-item-rastreio{display:flex;align-items:center;gap:6px;margin-top:6px;}
+  .def-item-rastreio label{font-size:11px;color:var(--gray-500);white-space:nowrap;}
+  .def-item-rastreio input{flex:1;padding:4px 8px;border:1.5px solid var(--gray-300);border-radius:4px;font-size:12px;font-family:var(--font);background:var(--white);}
+  .def-item-rastreio input:focus{outline:none;border-color:var(--red);}
   .funnel-val{opacity:0.9;font-weight:600;}
   .turno-bar-label{font-size:13px;font-weight:700;color:var(--gray-500);margin-bottom:6px;}
   .turno-bar-total{font-size:26px;font-weight:800;}
@@ -288,8 +306,12 @@
           </div>
           <div class="form-group">
             <label>Cliente</label>
-            <input type="text" id="ap-cliente" readonly placeholder="Preenchido automaticamente pelo PN" style="background:var(--gray-100);color:var(--gray-700);cursor:not-allowed;font-weight:600;" />
+            <input type="text" id="ap-cliente" readonly placeholder="Preenchido automaticamente pelo PN" />
             <div id="ap-cliente-msg" style="font-size:11px;color:var(--red);margin-top:4px;display:none">PN não cadastrado. Verifique o número informado.</div>
+          </div>
+          <div class="form-group">
+            <label>Cartão de Controle</label>
+            <input type="text" id="ap-cartao" placeholder="Ex: 1234" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)" />
           </div>
           <div class="form-group"><label>Qtd. Inspecionada</label><input type="number" id="ap-qtd-total" placeholder="0" min="0" /></div>
           <div class="form-group"><label>Qtd. Não Conforme</label><input type="number" id="ap-qtd-nc" placeholder="0" min="0" /></div>
@@ -304,19 +326,42 @@
             <div class="defeitos-tags" id="defeitos-tags-preview"></div>
           </div>
 
-          <div class="form-group"><label>Observações</label><textarea id="ap-obs" placeholder="Informações adicionais (opcional)"></textarea></div>
+          <!-- OBSERVAÇÕES COM RESPOSTAS RÁPIDAS -->
+          <div class="form-group">
+            <label>Observações</label>
+            <div class="obs-quick-options">
+              <label class="obs-quick-chip"><input type="checkbox" class="obs-quick-checkbox" value="Peça separada para análise dos inspetores"/> Peça separada para análise dos inspetores</label>
+              <label class="obs-quick-chip"><input type="checkbox" class="obs-quick-checkbox" value="Segregado todo o lote"/> Segregado todo o lote</label>
+              <label class="obs-quick-chip"><input type="checkbox" class="obs-quick-checkbox" value="Liderança informada"/> Liderança informada</label>
+            </div>
+            <textarea id="ap-obs" placeholder="Outras informações adicionais (opcional)"></textarea>
+          </div>
         </div>
         <div style="display:flex;gap:10px;">
-          <button class="btn btn-primary" style="flex:1" onclick="registrarApontamento()">Registrar Apontamento</button>
-          <button class="btn btn-secondary" onclick="limparForm()">Limpar</button>
+          <button class="btn btn-success" style="flex:1" onclick="registrarApontamento()">Registrar Apontamento</button>
+          <button class="btn btn-warning" onclick="limparForm()">Limpar</button>
         </div>
       </div>
 
       <div class="card">
         <div class="card-title">Apontamentos deste turno</div>
+        <div class="filters">
+          <div class="filter-date-group">
+            <label class="filter-date-label">De</label>
+            <input type="date" id="turno-data-ini"/>
+          </div>
+          <div class="filter-date-group">
+            <label class="filter-date-label">Até</label>
+            <input type="date" id="turno-data-fim"/>
+          </div>
+          <input type="text" id="turno-pn-filter" placeholder="Filtrar PN..." style="width:130px"/>
+          <button class="btn btn-secondary btn-sm" onclick="renderTurnoTable()">Filtrar</button>
+          <button class="btn btn-secondary btn-sm" onclick="limparFiltroTurno()">Limpar</button>
+        </div>
         <div class="table-wrap"><table>
-          <thead><tr><th>PN</th><th>Cliente</th><th>Insp.</th><th>NC</th><th>Defeitos</th><th>Hora</th><th></th></tr></thead>
+          <thead><tr><th>PN</th><th>Cliente</th><th>Insp.</th><th>NC</th><th>Defeitos</th><th>Hora</th></tr></thead>
           <tbody id="turno-tbody"></tbody>
+          <tfoot id="turno-tfoot"></tfoot>
         </table></div>
       </div>
     </div>
@@ -715,7 +760,7 @@ async function loadData(){
     }));
     state.apontamentos = (aResp.apontamentos||[]).map(a=>({
       id:a.id, data:formatDataBR(a.data), hora:a.hora, inspetor:a.inspetor, re:String(a.re), turno:a.turno,
-      pn:String(a.pn), cliente:a.cliente, qtdTotal:Number(a.qtdTotal)||0, qtdNC:Number(a.qtdNC)||0,
+      pn:String(a.pn), cliente:a.cliente, cartao:a.cartao?String(a.cartao):'', qtdTotal:Number(a.qtdTotal)||0, qtdNC:Number(a.qtdNC)||0,
       defeitos:a.defeitos||{}, obs:a.obs||''
     }));
   }catch(e){
@@ -753,6 +798,11 @@ window.addEventListener('load', async ()=>{
   buildDefeitosModal();
   updateDefeitoSelects();
   updateInspetorSelect();
+  document.querySelectorAll('.obs-quick-checkbox').forEach(c=>{
+    c.addEventListener('change', ()=>{
+      c.closest('.obs-quick-chip').classList.toggle('checked', c.checked);
+    });
+  });
 });
 
 // ══ MODAL DEFEITOS ══
@@ -774,6 +824,10 @@ function buildDefSection(title,lista,secId){
       <div class="def-item-qty">
         <label>Qtd. peças:</label>
         <input type="number" id="qty-${d.cod}" min="0" value="0" disabled onchange="updateQtyModal('${d.cod}')" />
+      </div>
+      <div class="def-item-rastreio" id="rastreio-wrap-${d.cod}" style="display:none">
+        <label>Rastreabilidade:</label>
+        <input type="text" id="rastreio-${d.cod}" placeholder="Nº de rastreabilidade" oninput="updateRastreioModal('${d.cod}')" />
       </div>
     </div>`).join('');
   return `
@@ -797,22 +851,31 @@ function toggleDefModal(cod){
   const chk=document.getElementById('chk-'+cod);
   const qty=document.getElementById('qty-'+cod);
   const item=document.getElementById('defitem-'+cod);
+  const rastreioWrap=document.getElementById('rastreio-wrap-'+cod);
   if(chk.checked){
-    defSelecionados[cod]=1;
+    defSelecionados[cod]={qty:1,rastreio:''};
     qty.disabled=false;
     qty.value=1;
     item.classList.add('selected');
+    rastreioWrap.style.display='flex';
   } else {
     delete defSelecionados[cod];
     qty.disabled=true;
     qty.value=0;
     item.classList.remove('selected');
+    rastreioWrap.style.display='none';
+    document.getElementById('rastreio-'+cod).value='';
   }
 }
 
 function updateQtyModal(cod){
   const qty=parseInt(document.getElementById('qty-'+cod).value)||0;
-  if(defSelecionados[cod]!==undefined) defSelecionados[cod]=qty;
+  if(defSelecionados[cod]!==undefined) defSelecionados[cod].qty=qty;
+}
+
+function updateRastreioModal(cod){
+  const val=document.getElementById('rastreio-'+cod).value;
+  if(defSelecionados[cod]!==undefined) defSelecionados[cod].rastreio=val;
 }
 
 function openDefeitosModal(){
@@ -821,10 +884,14 @@ function openDefeitosModal(){
     const chk=document.getElementById('chk-'+d.cod);
     const qty=document.getElementById('qty-'+d.cod);
     const item=document.getElementById('defitem-'+d.cod);
+    const rastreioWrap=document.getElementById('rastreio-wrap-'+d.cod);
+    const rastreioInput=document.getElementById('rastreio-'+d.cod);
     if(defSelecionados[d.cod]!==undefined){
-      chk.checked=true; qty.disabled=false; qty.value=defSelecionados[d.cod]; item.classList.add('selected');
+      chk.checked=true; qty.disabled=false; qty.value=defSelecionados[d.cod].qty; item.classList.add('selected');
+      rastreioWrap.style.display='flex'; rastreioInput.value=defSelecionados[d.cod].rastreio||'';
     } else {
       chk.checked=false; qty.disabled=true; qty.value=0; item.classList.remove('selected');
+      rastreioWrap.style.display='none'; rastreioInput.value='';
     }
   });
   openModal('modal-defeitos');
@@ -837,24 +904,29 @@ function limparDefeitos(){
     const chk=document.getElementById('chk-'+d.cod);
     const qty=document.getElementById('qty-'+d.cod);
     const item=document.getElementById('defitem-'+d.cod);
+    const rastreioWrap=document.getElementById('rastreio-wrap-'+d.cod);
+    const rastreioInput=document.getElementById('rastreio-'+d.cod);
     if(chk){chk.checked=false;}
     if(qty){qty.disabled=true;qty.value=0;}
     if(item){item.classList.remove('selected');}
+    if(rastreioWrap){rastreioWrap.style.display='none';}
+    if(rastreioInput){rastreioInput.value='';}
   });
   updateTriggerPreview();
 }
 
 function confirmarDefeitos(){
-  // Coleta qtds atuais do modal
+  // Coleta qtds e rastreios atuais do modal
   ALL_DEFS.forEach(d=>{
     if(defSelecionados[d.cod]!==undefined){
-      defSelecionados[d.cod]=parseInt(document.getElementById('qty-'+d.cod).value)||0;
+      defSelecionados[d.cod].qty=parseInt(document.getElementById('qty-'+d.cod).value)||0;
+      defSelecionados[d.cod].rastreio=document.getElementById('rastreio-'+d.cod).value.trim();
     }
   });
 
   // Valida se soma dos defeitos bate com Qtd. NC
   const qtdNC=parseInt(document.getElementById('ap-qtd-nc').value)||0;
-  const somaDefeitos=Object.values(defSelecionados).reduce((s,v)=>s+v,0);
+  const somaDefeitos=Object.values(defSelecionados).reduce((s,v)=>s+v.qty,0);
   const keys=Object.keys(defSelecionados);
 
   if(keys.length>0 && qtdNC>0 && somaDefeitos!==qtdNC){
@@ -905,7 +977,7 @@ function updateTriggerPreview(){
   triggerText.textContent=`${keys.length} defeito(s) selecionado(s)`;
   tagsEl.innerHTML=keys.map(cod=>{
     const d=ALL_DEFS.find(x=>x.cod===cod);
-    const qty=defSelecionados[cod];
+    const qty=defSelecionados[cod].qty;
     return `<span class="defeito-tag">${d?d.desc:cod}${qty>0?` (${qty})`:''}</span>`;
   }).join('');
 }
@@ -943,7 +1015,6 @@ function doLogin(){
     document.getElementById('btn-tab-turno').style.display='';
     document.getElementById('btn-tab-dashboard').style.display='none';
     setScreen('app'); showTab('turno');
-    renderTurnoTable(); renderTurnoKPIs();
   }
 }
 
@@ -971,28 +1042,42 @@ function startTimer(){
 async function registrarApontamento(){
   const pn=document.getElementById('ap-pn').value.trim();
   const cliente=document.getElementById('ap-cliente').value;
+  const cartao=document.getElementById('ap-cartao').value.trim();
   const qtdTotal=parseInt(document.getElementById('ap-qtd-total').value)||0;
   const qtdNC=parseInt(document.getElementById('ap-qtd-nc').value)||0;
   if(pn.length!==4){alert('Informe um PN válido com 4 dígitos.');return;}
   if(!cliente){alert('PN não cadastrado na lista de clientes. Verifique o número informado ou contate o Admin.');return;}
+  if(cartao.length!==4){alert('Informe o Cartão de Controle com 4 dígitos.');return;}
   if(qtdTotal===0){alert('Preencha a Qtd. Inspecionada.');return;}
 
-  // Valida coerência defeitos x qtdNC
-  const somaDefeitos=Object.values(defSelecionados).reduce((s,v)=>s+v,0);
+  // Valida coerência defeitos x qtdNC — obrigatório quando há peça não conforme
+  const somaDefeitos=Object.values(defSelecionados).reduce((s,v)=>s+v.qty,0);
   const keysD=Object.keys(defSelecionados);
-  if(keysD.length>0 && qtdNC>0 && somaDefeitos!==qtdNC){
+  if(qtdNC>0 && keysD.length===0){
+    alert('Existem peças não conformes informadas, porém nenhum defeito foi selecionado.\n\nAbra o seletor de Defeitos Encontrados e informe pelo menos um defeito antes de registrar.');
+    return;
+  }
+  if(qtdNC>0 && somaDefeitos!==qtdNC){
     alert(`Atenção: A soma das quantidades por defeito (${somaDefeitos} pç) não corresponde à Qtd. Não Conforme (${qtdNC} pç).\n\nAbra o seletor de defeitos e revise as quantidades antes de registrar.`);
     return;
   }
+
+  // Monta observações: chips selecionados + texto livre
+  const chipsSelecionados = Array.from(document.querySelectorAll('.obs-quick-checkbox:checked')).map(c=>c.value);
+  const textoLivre = document.getElementById('ap-obs').value.trim();
+  const obsPartes = [...chipsSelecionados];
+  if(textoLivre) obsPartes.push(textoLivre);
+  const obsFinal = obsPartes.join(' | ');
+
   const now=new Date();
   const novoApontamento={
     id:Date.now(),
     data:now.toLocaleDateString('pt-BR'),
     hora:now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
     inspetor:state.currentUser.nome, re:state.currentUser.re, turno:state.currentUser.turno,
-    pn,cliente,qtdTotal,qtdNC,
+    pn,cliente,cartao,qtdTotal,qtdNC,
     defeitos:{...defSelecionados},
-    obs:document.getElementById('ap-obs').value.trim()
+    obs:obsFinal
   };
 
   const btn=event?.target;
@@ -1010,8 +1095,9 @@ async function registrarApontamento(){
 }
 
 function limparForm(){
-  ['ap-pn','ap-qtd-total','ap-qtd-nc','ap-obs'].forEach(id=>document.getElementById(id).value='');
+  ['ap-pn','ap-cartao','ap-qtd-total','ap-qtd-nc','ap-obs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ap-cliente').value='';
+  document.querySelectorAll('.obs-quick-checkbox').forEach(c=>{c.checked=false;c.closest('.obs-quick-chip').classList.remove('checked');});
   hideEl('ap-cliente-msg');
   limparDefeitos();
 }
@@ -1040,25 +1126,59 @@ function onPnInput(input){
 
 function renderTurnoTable(){
   const tbody=document.getElementById('turno-tbody');
-  const hoje=new Date().toLocaleDateString('pt-BR');
-  const meus=state.apontamentos.filter(a=>normalizeRE(a.re)===normalizeRE(state.currentUser.re)&&a.data===hoje);
-  if(!meus.length){tbody.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div><p>Nenhum apontamento neste turno ainda.</p></div></td></tr>';return;}
+  const tfoot=document.getElementById('turno-tfoot');
+
+  let meus=state.apontamentos.filter(a=>normalizeRE(a.re)===normalizeRE(state.currentUser.re));
+
+  const ini=document.getElementById('turno-data-ini')?.value;
+  const fim=document.getElementById('turno-data-fim')?.value;
+  const pnFiltro=document.getElementById('turno-pn-filter')?.value?.toLowerCase();
+
+  if(ini) meus=meus.filter(a=>parseData(a.data)>=new Date(ini));
+  if(fim) meus=meus.filter(a=>parseData(a.data)<=new Date(fim+'T23:59:59'));
+  if(pnFiltro) meus=meus.filter(a=>a.pn.toLowerCase().includes(pnFiltro));
+
+  if(!meus.length){
+    tbody.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-icon">📋</div><p>Nenhum apontamento encontrado.</p></div></td></tr>';
+    tfoot.innerHTML='';
+    return;
+  }
+
   tbody.innerHTML=[...meus].reverse().map(a=>`
     <tr>
       <td><strong>${a.pn}</strong></td><td>${a.cliente}</td><td>${a.qtdTotal}</td>
       <td>${a.qtdNC>0?`<span class="badge badge-red">${a.qtdNC}</span>`:`<span class="badge badge-green">0</span>`}</td>
       <td style="max-width:200px;font-size:12px">${renderDefTags(a.defeitos)}</td>
       <td>${a.hora}</td>
-      <td><button class="btn btn-secondary btn-sm" onclick="openDeleteModal(${a.id})">✕</button></td>
     </tr>`).join('');
+
+  const totalInsp=meus.reduce((s,a)=>s+a.qtdTotal,0);
+  const totalNC=meus.reduce((s,a)=>s+a.qtdNC,0);
+  tfoot.innerHTML=`
+    <tr style="font-weight:700;background:var(--gray-100);border-top:2px solid var(--gray-300)">
+      <td colspan="2" style="text-align:right;padding:10px 12px">Total filtrado:</td>
+      <td style="padding:10px 12px">${totalInsp}</td>
+      <td style="padding:10px 12px"><span class="badge badge-red">${totalNC}</span></td>
+      <td colspan="2"></td>
+    </tr>`;
+}
+
+function limparFiltroTurno(){
+  ['turno-data-ini','turno-data-fim','turno-pn-filter'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  renderTurnoTable();
 }
 
 function renderDefTags(defeitos){
   if(!defeitos||!Object.keys(defeitos).length) return '<span style="color:var(--gray-300)">—</span>';
-  return Object.entries(defeitos).map(([cod,qty])=>{
-    const d=ALL_DEFS.find(x=>x.cod===cod);
+  return Object.entries(defeitos).map(([cod,info])=>{
     const dObj=ALL_DEFS.find(x=>x.cod===cod);
-    return `<span class="badge badge-red" style="margin:1px;font-size:10px">${dObj?dObj.desc:cod}${qty>0?` (${qty})`:''}</span>`;
+    const qty = (typeof info==='object') ? info.qty : info;
+    const rastreio = (typeof info==='object') ? info.rastreio : '';
+    const title = rastreio ? `Rastreabilidade: ${rastreio}` : '';
+    return `<span class="badge badge-red" style="margin:1px;font-size:10px" title="${title}">${dObj?dObj.desc:cod}${qty>0?` (${qty})`:''}</span>`;
   }).join('');
 }
 
@@ -1151,10 +1271,11 @@ function renderDashboard(){
   // Defeitos com qtd total
   const defs={};
   data.forEach(a=>{
-    if(a.defeitos) Object.entries(a.defeitos).forEach(([cod,qty])=>{
+    if(a.defeitos) Object.entries(a.defeitos).forEach(([cod,info])=>{
+      const qty = (typeof info==='object') ? (info.qty||0) : (info||0);
       if(!defs[cod])defs[cod]={ocorrencias:0,totalPecas:0};
       defs[cod].ocorrencias++;
-      defs[cod].totalPecas+=qty||0;
+      defs[cod].totalPecas+=qty;
     });
   });
   document.getElementById('d-def-tbody').innerHTML=Object.keys(defs).length?Object.entries(defs).sort((a,b)=>b[1].totalPecas-a[1].totalPecas).map(([cod,v])=>{
@@ -1373,6 +1494,7 @@ document.querySelectorAll('.modal-overlay').forEach(el=>{
 // ══ UTILS ══
 function setScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');}
 let dashDateInitialized = false;
+let turnoDateInitialized = false;
 
 function showTab(n){
   if(n==='dashboard' && (!state.currentUser || state.currentUser.perfil!=='admin')) return;
@@ -1382,6 +1504,15 @@ function showTab(n){
   const idx=['turno','dashboard','historico','admin'].indexOf(n);
   document.querySelectorAll('.nav-tab')[idx]?.classList.add('active');
   document.getElementById('tab-'+n).classList.add('active');
+  if(n==='turno'){
+    if(!turnoDateInitialized){
+      const hojeISO = toISODate(new Date());
+      document.getElementById('turno-data-ini').value = hojeISO;
+      document.getElementById('turno-data-fim').value = hojeISO;
+      turnoDateInitialized = true;
+    }
+    renderTurnoTable(); renderTurnoKPIs();
+  }
   if(n==='dashboard'){
     if(!dashDateInitialized){
       const hojeISO = toISODate(new Date());
