@@ -124,7 +124,18 @@
   .nc-popup-close{position:absolute;top:10px;right:14px;font-size:18px;cursor:pointer;color:var(--gray-500);font-weight:700;line-height:1;}
   .nc-popup-close:hover{color:var(--black);}
 
-  /* MODAL PLANO DE CONTROLE */
+  /* HUB DE CLIENTES */
+  .hub-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px;}
+  @media(max-width:600px){.hub-grid{grid-template-columns:repeat(2,1fr);}}
+  .hub-btn{padding:22px 10px;font-size:16px;font-weight:800;border:2px solid var(--red);border-radius:10px;background:var(--white);color:var(--red-dark);cursor:pointer;transition:all 0.15s;letter-spacing:0.5px;}
+  .hub-btn:hover,.hub-btn:active{background:var(--red-dark);color:white;transform:scale(0.98);}
+  .hub-btn.ativo{background:var(--red-dark);color:white;box-shadow:0 0 0 3px var(--red),0 0 0 6px rgba(27,58,92,0.15);}
+  .card-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .card-title-row .card-title{margin-bottom:0;}
+  .pn-sugestoes{background:var(--white);border:1.5px solid var(--gray-300);border-radius:6px;margin-top:4px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+  .pn-sugestao-item{padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--gray-100);}
+  .pn-sugestao-item:last-child{border-bottom:none;}
+  .pn-sugestao-item:hover{background:var(--red-light);color:var(--red-dark);font-weight:600;}
   .pc-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:800;display:flex;align-items:center;justify-content:center;}
   .pc-modal{background:var(--white);border-radius:14px;width:96%;max-width:560px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,0.35);}
   .pc-header{background:var(--red-dark);color:white;padding:16px 20px;flex-shrink:0;}
@@ -341,54 +352,76 @@
         <div class="kpi yellow"><div class="kpi-label">Taxa NC</div><div class="kpi-value" id="kpi-pct">0%</div><div class="kpi-sub">% de rejeição</div></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">Novo Apontamento</div>
-        <div id="ap-success" class="alert alert-success" style="display:none">✔ Apontamento registrado!</div>
-        <div class="form-col">
-          <div class="form-group">
-            <label>Nº da Peça (PN)</label>
-            <input type="text" id="ap-pn" placeholder="Ex: 2711" maxlength="4" inputmode="numeric" oninput="onPnInput(this)" />
-          </div>
-          <div class="form-group">
-            <label>Cliente</label>
-            <input type="text" id="ap-cliente" readonly placeholder="Preenchido automaticamente pelo PN" />
-            <div id="ap-cliente-msg" style="font-size:11px;color:var(--red);margin-top:4px;display:none">PN não cadastrado. Verifique o número informado.</div>
-          </div>
-          <div class="form-group">
-            <label>Cartão de Controle</label>
-            <input type="text" id="ap-cartao" placeholder="Ex: 1234-A" />
-          </div>
-          <div class="form-group"><label>Qtd. Inspecionada</label><input type="number" id="ap-qtd-total" placeholder="0" min="0" /></div>
-          <div class="form-group"><label>Qtd. Não Conforme</label><input type="number" id="ap-qtd-nc" placeholder="0" min="0" /></div>
-
-          <!-- DEFEITOS TRIGGER -->
-          <div class="form-group">
-            <label>Defeitos Encontrados</label>
-            <div class="defeito-trigger" id="defeito-trigger" onclick="openDefeitosModal()">
-              <span class="defeito-trigger-text" id="defeito-trigger-text">Clique para selecionar os defeitos...</span>
-              <span class="defeito-trigger-arrow">▼</span>
-            </div>
-            <div class="defeitos-tags" id="defeitos-tags-preview"></div>
-          </div>
-
-          <!-- OBSERVAÇÕES COM LISTA SUSPENSA -->
-          <div class="form-group">
-            <label>Observações rápidas</label>
-            <select id="ap-obs-select">
-              <option value="">Selecione uma opção...</option>
-              <option value="Peça separada para análise dos inspetores">Peça separada para análise dos inspetores</option>
-              <option value="Segregado todo o lote">Segregado todo o lote</option>
-              <option value="Liderança informada">Liderança informada</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Observações adicionais</label>
-            <textarea id="ap-obs" placeholder="Outras informações (opcional)"></textarea>
-          </div>
+      <!-- HUB DE CLIENTES -->
+      <div class="card" id="hub-clientes">
+        <div class="card-title">Selecione o Cliente</div>
+        <div class="hub-grid">
+          <button class="hub-btn" onclick="selecionarCliente('EATON')">EATON</button>
+          <button class="hub-btn" onclick="selecionarCliente('ZF')">ZF</button>
+          <button class="hub-btn" onclick="selecionarCliente('GM')">GM</button>
+          <button class="hub-btn" onclick="selecionarCliente('AAM')">AAM</button>
+          <button class="hub-btn" onclick="selecionarCliente('MWM')">MWM</button>
+          <button class="hub-btn" onclick="selecionarCliente('SCANIA')">SCANIA</button>
+          <button class="hub-btn" onclick="selecionarCliente('MBB')">MBB</button>
+          <button class="hub-btn" onclick="selecionarCliente('VOLVO')">VOLVO</button>
         </div>
-        <div style="display:flex;gap:10px;">
-          <button class="btn btn-success" style="flex:1" onclick="registrarApontamento()">Registrar Apontamento</button>
-          <button class="btn btn-warning" onclick="limparForm()">Limpar</button>
+      </div>
+
+      <!-- FORMULÁRIO (oculto até selecionar cliente) -->
+      <div id="form-apontamento" style="display:none">
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title" id="form-cliente-titulo">Novo Apontamento</div>
+            <button class="btn btn-secondary btn-sm" onclick="voltarHub()">← Trocar cliente</button>
+          </div>
+          <div id="ap-success" class="alert alert-success" style="display:none">✔ Apontamento registrado!</div>
+          <div class="form-col">
+            <div class="form-group">
+              <label>Nº da Peça (PN)</label>
+              <input type="text" id="ap-pn" placeholder="Ex: 2711" maxlength="4" inputmode="numeric" oninput="onPnInput(this)" />
+              <div id="ap-pn-sugestoes" class="pn-sugestoes" style="display:none"></div>
+              <div id="ap-cliente-msg" style="font-size:11px;color:var(--red);margin-top:4px;display:none">PN não pertence a este cliente. Verifique o número.</div>
+            </div>
+            <div class="form-group">
+              <label>Cliente</label>
+              <input type="text" id="ap-cliente" readonly />
+            </div>
+            <div class="form-group">
+              <label>Cartão de Controle</label>
+              <input type="text" id="ap-cartao" placeholder="Ex: 1234-A" />
+            </div>
+            <div class="form-group"><label>Qtd. Inspecionada</label><input type="number" id="ap-qtd-total" placeholder="0" min="0" /></div>
+            <div class="form-group"><label>Qtd. Não Conforme</label><input type="number" id="ap-qtd-nc" placeholder="0" min="0" oninput="onQtdNcInput(this)" /></div>
+
+            <!-- DEFEITOS TRIGGER -->
+            <div class="form-group">
+              <label>Defeitos Encontrados</label>
+              <div class="defeito-trigger" id="defeito-trigger" onclick="openDefeitosModal()">
+                <span class="defeito-trigger-text" id="defeito-trigger-text">Clique para selecionar os defeitos...</span>
+                <span class="defeito-trigger-arrow">▼</span>
+              </div>
+              <div class="defeitos-tags" id="defeitos-tags-preview"></div>
+            </div>
+
+            <!-- OBSERVAÇÕES -->
+            <div class="form-group">
+              <label>Observações rápidas</label>
+              <select id="ap-obs-select">
+                <option value="">Selecione uma opção...</option>
+                <option value="Peça separada para análise dos inspetores">Peça separada para análise dos inspetores</option>
+                <option value="Segregado todo o lote">Segregado todo o lote</option>
+                <option value="Liderança informada">Liderança informada</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Observações adicionais</label>
+              <textarea id="ap-obs" placeholder="Outras informações (opcional)"></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-success" style="flex:1" onclick="registrarApontamento()">Registrar Apontamento</button>
+            <button class="btn btn-warning" onclick="limparForm()">Limpar</button>
+          </div>
         </div>
       </div>
 
@@ -1296,7 +1329,12 @@ async function registrarApontamento(){
   const qtdTotal=parseInt(document.getElementById('ap-qtd-total').value)||0;
   const qtdNC=parseInt(document.getElementById('ap-qtd-nc').value)||0;
   if(pn.length!==4){alert('Informe um PN válido com 4 dígitos.');return;}
-  if(!cliente){alert('PN não cadastrado na lista de clientes. Verifique o número informado ou contate o Admin.');return;}
+  // Valida PN: se há cliente no Hub, checa se PN pertence a ele
+  if(clienteSelecionado){
+    if(PN_CLIENTE[pn]!==clienteSelecionado){alert(`PN ${pn} não pertence ao cliente ${clienteSelecionado}. Verifique o número informado.`);return;}
+  } else {
+    if(!cliente){alert('PN não cadastrado na lista de clientes. Verifique o número informado ou contate o Admin.');return;}
+  }
   if(!cartao){alert('Preencha o Cartão de Controle.');return;}
   if(qtdTotal===0){alert('Preencha a Qtd. Inspecionada.');return;}
 
@@ -1347,10 +1385,46 @@ async function registrarApontamento(){
 
 function limparForm(){
   ['ap-pn','ap-cartao','ap-qtd-total','ap-qtd-nc','ap-obs'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('ap-cliente').value='';
+  // Mantém o cliente se estiver no Hub
+  if(!clienteSelecionado) document.getElementById('ap-cliente').value='';
   document.getElementById('ap-obs-select').value='';
   hideEl('ap-cliente-msg');
+  const sug=document.getElementById('ap-pn-sugestoes');
+  if(sug) sug.style.display='none';
   limparDefeitos();
+}
+
+// ══ HUB DE CLIENTES ══
+let clienteSelecionado = '';
+
+function selecionarCliente(cliente){
+  clienteSelecionado = cliente;
+  // Destaca botão ativo
+  document.querySelectorAll('.hub-btn').forEach(b=>{
+    b.classList.toggle('ativo', b.textContent===cliente);
+  });
+  // Mostra formulário, oculta hub
+  document.getElementById('hub-clientes').style.display='none';
+  document.getElementById('form-apontamento').style.display='';
+  document.getElementById('form-cliente-titulo').textContent=`Novo Apontamento — ${cliente}`;
+  // Preenche e trava campo cliente
+  document.getElementById('ap-cliente').value = cliente;
+  // Limpa o formulário
+  limparForm();
+  // Foca no PN
+  setTimeout(()=>document.getElementById('ap-pn').focus(), 100);
+}
+
+function voltarHub(){
+  clienteSelecionado = '';
+  document.getElementById('form-apontamento').style.display='none';
+  document.getElementById('hub-clientes').style.display='';
+  limparForm();
+}
+
+function onQtdNcInput(input){
+  const val = parseInt(input.value)||0;
+  if(val > 0) openDefeitosModal();
 }
 
 function onPnInput(input){
@@ -1358,22 +1432,59 @@ function onPnInput(input){
   const pn = input.value;
   const clienteField = document.getElementById('ap-cliente');
   const msgField = document.getElementById('ap-cliente-msg');
+  const sugestoesEl = document.getElementById('ap-pn-sugestoes');
+
+  // Se não tem cliente selecionado, comportamento antigo
+  if(!clienteSelecionado){
+    if(pn.length===4){
+      const cliente = PN_CLIENTE[pn];
+      if(cliente){ clienteField.value=cliente; hideEl('ap-cliente-msg'); }
+      else { clienteField.value=''; showEl('ap-cliente-msg'); }
+    } else { clienteField.value=''; hideEl('ap-cliente-msg'); }
+    if(sugestoesEl) sugestoesEl.style.display='none';
+    return;
+  }
+
+  // Com cliente selecionado: filtra PNs do cliente
+  hideEl('ap-cliente-msg');
+  if(sugestoesEl) sugestoesEl.style.display='none';
+
+  if(pn.length===0){ return; }
+
+  // Busca PNs do cliente que começam com o digitado
+  const pnsDoCliente = Object.entries(PN_CLIENTE)
+    .filter(([p,c])=>c===clienteSelecionado && p.startsWith(pn))
+    .map(([p])=>p);
 
   if(pn.length===4){
-    const cliente = PN_CLIENTE[pn];
-    if(cliente){
-      clienteField.value = cliente;
+    const clienteDoPN = PN_CLIENTE[pn];
+    if(clienteDoPN === clienteSelecionado){
       hideEl('ap-cliente-msg');
+      if(sugestoesEl) sugestoesEl.style.display='none';
+      // Gatilho plano de controle
+      if(PC_PLANOS[pn]) abrirPlanoControle(pn);
     } else {
-      clienteField.value = '';
       showEl('ap-cliente-msg');
     }
-    // Gatilho do plano de controle
-    if(PC_PLANOS[pn]) abrirPlanoControle(pn);
-  } else {
-    clienteField.value = '';
-    hideEl('ap-cliente-msg');
+  } else if(pnsDoCliente.length > 0 && pn.length >= 2){
+    // Mostra sugestões
+    if(sugestoesEl){
+      sugestoesEl.innerHTML = pnsDoCliente.slice(0,8).map(p=>
+        `<div class="pn-sugestao-item" onclick="selecionarPN('${p}')">${p}</div>`
+      ).join('');
+      sugestoesEl.style.display='';
+    }
   }
+}
+
+function selecionarPN(pn){
+  document.getElementById('ap-pn').value = pn;
+  const sugestoesEl = document.getElementById('ap-pn-sugestoes');
+  if(sugestoesEl) sugestoesEl.style.display='none';
+  hideEl('ap-cliente-msg');
+  if(PC_PLANOS[pn]) abrirPlanoControle(pn);
+  // Foca no próximo campo
+  setTimeout(()=>document.getElementById('ap-cartao').focus(), 100);
 }
 
 // ══ PLANO DE CONTROLE ══
