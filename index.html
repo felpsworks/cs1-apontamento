@@ -1195,7 +1195,7 @@ async function registrarApontamento(){
   const qtdNC=parseInt(document.getElementById('ap-qtd-nc').value)||0;
   if(pn.length!==4){alert('Informe um PN válido com 4 dígitos.');return;}
   if(!cliente){alert('PN não cadastrado na lista de clientes. Verifique o número informado ou contate o Admin.');return;}
-  if(cartao.length!==4){alert('Informe o Cartão de Controle com 4 dígitos.');return;}
+  if(!cartao){alert('Preencha o Cartão de Controle.');return;}
   if(qtdTotal===0){alert('Preencha a Qtd. Inspecionada.');return;}
 
   // Valida coerência defeitos x qtdNC — obrigatório quando há peça não conforme
