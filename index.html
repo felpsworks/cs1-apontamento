@@ -1298,7 +1298,8 @@ function gerarPDF(){
   doc.text('Martinrea Honsel Brasil — CS1 Apontamento de Inspeção', 14, 290);
   doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 140, 290);
 
-  doc.save(`Boletim_QSS_${hoje.replace(/\//g,'-')}.pdf`);
+  const nomeArquivo = `Boletim_QSS_${hoje.replace(/\//g,'-')}_${inspetor.replace(/\s+/g,'_')}_${state.currentUser?.turno||'T'}.pdf`;
+  doc.save(nomeArquivo);
 }
 
 function doLogout(){
